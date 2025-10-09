@@ -1,0 +1,109 @@
+{
+  "auth": {
+    "welcome": "Welcome to Maseru Marketplace",
+    "login": "Login",
+    "register": "Register"
+  },
+  "home": "Home",
+  "navigation": {
+    "products": "Products",
+    "orders": "Orders",
+    "chat": "Chat",
+    "profile": "Profile"
+  },
+  "products": {
+    "search": "Search Products",
+    "add_to_cart": "Add to Cart",
+    "out_of_stock": "Out of Stock"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "view": "View",
+    "close": "Close",
+    "no": "No",
+    "error": "Error",
+    "loading": "Loading..."
+  },
+  "profile": {
+    "title": "Profile",
+    "user": "User",
+    "settings": "Settings",
+    "account": "Account",
+    "theme": "Theme",
+    "language": "Language",
+    "english": "English",
+    "sesotho": "Sesotho",
+    "edit_profile": "Edit Profile",
+    "change_password": "Change Password",
+    "order_history": "Order History",
+    "logout": "Logout",
+    "logout_confirm": "Logout?",
+    "logout_message": "Are you sure you want to logout?"
+  },
+  "admin": {
+    "dashboard": "Admin Dashboard",
+    "user_management": "User Management",
+    "product_analytics": "Product Analytics",
+    "order_management": "Order Management",
+    "interview_data": "Interview Data",
+    "system_settings": "System Settings",
+    "reports": "Reports"
+  },
+  "vendor": {
+    "dashboard": "Vendor Dashboard",
+    "products": "Products",
+    "active_orders": "Active Orders",
+    "revenue": "Revenue",
+    "total_sales": "Total Sales",
+    "recent_orders": "Recent Orders",
+    "low_stock": "Low Stock Alert",
+    "low_stock_message": "Some products are running low on stock",
+    "title": "Products"
+  },
+  "driver": {
+    "dashboard": "Driver Dashboard",
+    "active_deliveries": "Active Deliveries",
+    "completed_deliveries": "Completed Deliveries",
+    "recent_deliveries": "Recent Deliveries"
+  },
+  "delivery_requests": {
+    "title": "Delivery Requests"
+  },
+  "orders": {
+    "title": "Orders",
+    "history": "Order History",
+    "all": "All",
+    "no_orders": "No Orders",
+    "no_orders_status": "You have no orders at the moment.",
+    "error": "Failed to load orders",
+    "order": "Order",
+    "items": "Items",
+    "products": "Products",
+    "date": "Date",
+    "total": "Total",
+    "view_details": "View Details",
+    "cancel": "Cancel",
+    "cancel_title": "Cancel Order",
+    "cancel_confirm": "Are you sure you want to cancel this order?",
+    "cancel_yes": "Yes, Cancel",
+    "cancel_success": "Order cancelled successfully",
+    "confirm": "Confirm",
+    "prepare": "Prepare",
+    "more_items": "more items",
+    "id": "Order ID",
+    "status": "Status",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "preparing": "Preparing",
+    "ready": "Ready",
+    "delivering": "Delivering",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "product": {
+    "price": "Price",
+    "add_to_cart": "Add to Cart",
+    "added_to_cart": "Added to cart!"
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "auth": {
+    "welcome": "Rea u amohela ho Maseru Marketplace",
+    "login": "Kena",
+    "register": "Ngolisa"
+  },
+  "home": "Lehae",
+  "navigation": {
+    "products": "Lihlahisoa",
+    "orders": "Litaelo",
+    "chat": "Moqoqo",
+    "profile": "Boemo"
+  },
+  "products": {
+    "search": "Batla Lihlahisoa",
+    "add_to_cart": "Kenya ka Kariking",
+    "out_of_stock": "Ha e sa le teng"
+  },
+  "common": {
+    "save": "Boloka",
+    "cancel": "Khansela",
+    "view": "Sheba",
+    "close": "Koala",
+    "no": "Che",
+    "error": "Phoso",
+    "loading": "E ntse e jara..."
+  },
+  "profile": {
+    "title": "Boemo",
+    "user": "Mosebelisi",
+    "settings": "Litlhophiso",
+    "account": "Akhaonto",
+    "theme": "Sehlooho",
+    "language": "Puo",
+    "english": "Senyesemane",
+    "sesotho": "Sesotho",
+    "edit_profile": "Fetola Boemo",
+    "change_password": "Fetola Password",
+    "order_history": "Nalane ea Litaelo",
+    "logout": "Tsoa",
+    "logout_confirm": "Tsoa?",
+    "logout_message": "Na u na le bonnete ba hore u batla ho tsoa?"
+  },
+  "admin": {
+    "dashboard": "Dashboard ea Admin",
+    "user_management": "Ts'ebetso ea Basebelisi",
+    "product_analytics": "Analytics ea Lihlahisoa",
+    "order_management": "Ts'ebetso ea Litaelo",
+    "interview_data": "Lintlha tsa Puisano",
+    "system_settings": "Litlhophiso tsa Sistimi",
+    "reports": "Litlaleho"
+  },
+  "vendor": {
+    "dashboard": "Dashboard ea Morekisi",
+    "products": "Lihlahisoa",
+    "active_orders": "Litaelo tse Sebetsang",
+    "revenue": "Lekeno",
+    "total_sales": "Kakaretso ea Thekiso",
+    "recent_orders": "Litaelo tsa Haufinyane",
+    "low_stock": "Tlhokomeliso ea Stock e Tlase",
+    "low_stock_message": "Lihlahisoa tse ling li ntse li fela",
+    "title": "Lihlahisoa"
+  },
+  "driver": {
+    "dashboard": "Dashboard ea Mokhanni",
+    "active_deliveries": "Liphepelo tse Sebetsang",
+    "completed_deliveries": "Liphepelo tse Phethiloeng",
+    "recent_deliveries": "Liphepelo tsa Haufinyane"
+  },
+  "delivery_requests": {
+    "title": "Likopo tsa Phepelo"
+  },
+  "orders": {
+    "title": "Litaelo",
+    "history": "Nalane ea Litaelo",
+    "all": "Tsohle",
+    "no_orders": "Ha ho Litaelo",
+    "no_orders_status": "Ha u na litaelo hajoale.",
+    "error": "E hloleha ho jara litaelo",
+    "order": "Odara",
+    "items": "Lintho",
+    "products": "Lihlahisoa",
+    "date": "Letsatsi",
+    "total": "Kakaretso",
+    "view_details": "Sheba Lintlha",
+    "cancel": "Khansela",
+    "cancel_title": "Khansela Odara",
+    "cancel_confirm": "Na u na le bonnete ba hore u batla ho khansela odara ee?",
+    "cancel_yes": "E, Khansela",
+    "cancel_success": "Odara e khanselitsoe ka katleho",
+    "confirm": "Netefatsa",
+    "prepare": "Lokisetsa",
+    "ready": "E Loketse ho Lata",
+    "more_items": "lintho tse ling",
+    "id": "ID ea Odara",
+    "status": "Boemo",
+    "pending": "E emetse",
+    "confirmed": "E netefalitsoe",
+    "preparing": "E lokisetsa",
+    "delivering": "E ntse e pepa",
+    "completed": "E phethiloe",
+    "cancelled": "E khanselitsoe"
+  },
+  "product": {
+    "price": "Theko",
+    "add_to_cart": "Kenya ka Kariking",
+    "added_to_cart": "E kentsoe ka kariking!"
+  }
+}
