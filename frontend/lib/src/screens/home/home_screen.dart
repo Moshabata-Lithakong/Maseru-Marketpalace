@@ -105,60 +105,98 @@ class _HomeScreenState extends State<HomeScreen> {
   SliverToBoxAdapter _buildHeaderSection(BuildContext context, AppLocalizations appLocalizations) {
     return SliverToBoxAdapter(
       child: Container(
-        height: 400,
+        height: 500, // Increased height for better image display
         decoration: BoxDecoration(
-          image: const DecorationImage(
-            image: NetworkImage(
-              'https://images.unsplash.com/photo-1598974353355-0b4d87b9b895?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+          image: DecorationImage(
+            image: const NetworkImage(
+              'https://images.unsplash.com/photo-1574362849222-87fc8c962d43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
             ),
             fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.3), // Dark overlay for better text readability
+              BlendMode.darken,
+            ),
           ),
-          color: Colors.black.withOpacity(0.4),
-          backgroundBlendMode: BlendMode.darken,
         ),
         child: Stack(
           children: [
-            // Content - Positioned at bottom without center logo
+            // Background Pattern/Overlay
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.6),
+                  ],
+                ),
+              ),
+            ),
+            
+            // Content
             Positioned(
-              bottom: 40,
+              bottom: 0,
               left: 0,
               right: 0,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Container(
+                padding: const EdgeInsets.all(30),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.8),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
                 child: Column(
                   children: [
-                    // App Logo/Title
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'MASERU MARKETPLACE',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue[800],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Shop Local. Support Local.',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                            textAlign: TextAlign.center,
+                    // Main Title
+                    Text(
+                      'MASERU MARKETPLACE',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 2.0,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 10.0,
+                            color: Colors.black.withOpacity(0.5),
+                            offset: const Offset(2.0, 2.0),
                           ),
                         ],
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
+                    
+                    // Subtitle
+                    Text(
+                      'Your Local Shopping Destination',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.w300,
+                        letterSpacing: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    // Tagline
+                    Text(
+                      'Shop Local • Support Local • Grow Together',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.8),
+                        fontStyle: FontStyle.italic,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 30),
                     
                     // Big Get Started Button
                     Container(
@@ -166,23 +204,83 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ElevatedButton(
                         onPressed: _navigateToLogin,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
+                          backgroundColor: Colors.orange[600],
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
-                          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          textStyle: const TextStyle(
+                            fontSize: 20, 
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          elevation: 5,
+                          elevation: 8,
+                          shadowColor: Colors.orange.withOpacity(0.5),
                         ),
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.shopping_cart, size: 24),
-                            SizedBox(width: 10),
-                            Text('START SHOPPING'),
+                            Icon(Icons.shopping_cart, size: 28),
+                            SizedBox(width: 12),
+                            Text('GET STARTED NOW'),
                           ],
                         ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Additional Info
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.local_shipping, color: Colors.orange[200], size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Free delivery to taxi ranks • Secure payments • Local vendors',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            // Top Right Corner Decoration
+            Positioned(
+              top: 50,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.verified, color: Colors.green[300], size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      'TRUSTED',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -212,31 +310,31 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 30),
             
-            // Big Action Buttons - Always navigate to login for now
+            // Big Action Buttons with Images - Always navigate to login for now
             Wrap(
               spacing: 15,
               runSpacing: 15,
               children: [
-                _buildActionButton(
-                  Icons.food_bank,
+                _buildActionButtonWithImage(
+                  'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
                   'Food & Drinks',
                   Colors.green,
                   _navigateToLogin,
                 ),
-                _buildActionButton(
-                  Icons.shopping_bag,
+                _buildActionButtonWithImage(
+                  'https://images.unsplash.com/photo-1445205170230-053b83016050?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
                   'Clothing',
                   Colors.blue,
                   _navigateToLogin,
                 ),
-                _buildActionButton(
-                  Icons.phone_android,
+                _buildActionButtonWithImage(
+                  'https://images.unsplash.com/photo-1498049794561-7780e7231661?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
                   'Electronics',
                   Colors.purple,
                   _navigateToLogin,
                 ),
-                _buildActionButton(
-                  Icons.home,
+                _buildActionButtonWithImage(
+                  'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
                   'Household',
                   Colors.orange,
                   _navigateToLogin,
@@ -249,14 +347,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _buildActionButtonWithImage(String imageUrl, String label, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 160,
         height: 120,
         decoration: BoxDecoration(
-          color: Colors.white,
           borderRadius: BorderRadius.circular(15),
           boxShadow: const [
             BoxShadow(
@@ -265,28 +362,60 @@ class _HomeScreenState extends State<HomeScreen> {
               offset: Offset(0, 4),
             ),
           ],
-          border: Border.all(color: color.withOpacity(0.3), width: 2),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
+            // Background Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Image.network(
+                imageUrl,
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
               ),
-              child: Icon(icon, size: 32, color: color),
             ),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+            
+            // Dark Overlay
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.7),
+                    Colors.transparent,
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
+            ),
+            
+            // Content
+            Positioned(
+              bottom: 10,
+              left: 10,
+              right: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -319,7 +448,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 30),
             
-            // Category Grid
+            // Category Grid with Images
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -327,12 +456,36 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisSpacing: 15,
               mainAxisSpacing: 15,
               children: [
-                _buildCategoryItem('Bread', '🍞', Colors.amber),
-                _buildCategoryItem('Meat', '🥩', Colors.red),
-                _buildCategoryItem('Veggies', '🥬', Colors.green),
-                _buildCategoryItem('Drinks', '🥤', Colors.blue),
-                _buildCategoryItem('Snacks', '🍪', Colors.orange),
-                _buildCategoryItem('Other', '📦', Colors.grey),
+                _buildCategoryItemWithImage(
+                  'Bread',
+                  'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
+                  Colors.amber,
+                ),
+                _buildCategoryItemWithImage(
+                  'Meat',
+                  'https://images.unsplash.com/photo-1604503468506-a8da13d82791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
+                  Colors.red,
+                ),
+                _buildCategoryItemWithImage(
+                  'Veggies',
+                  'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
+                  Colors.green,
+                ),
+                _buildCategoryItemWithImage(
+                  'Drinks',
+                  'https://images.unsplash.com/photo-1544145945-f90425340c7e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
+                  Colors.blue,
+                ),
+                _buildCategoryItemWithImage(
+                  'Snacks',
+                  'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
+                  Colors.orange,
+                ),
+                _buildCategoryItemWithImage(
+                  'Other',
+                  'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
+                  Colors.grey,
+                ),
               ],
             ),
           ],
@@ -341,31 +494,68 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryItem(String name, String emoji, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 24),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            name,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+  Widget _buildCategoryItemWithImage(String name, String imageUrl, Color color) {
+    return GestureDetector(
+      onTap: _navigateToLogin,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 5,
+              offset: Offset(0, 2),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Background Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                imageUrl,
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+            
+            // Dark Overlay
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.black.withOpacity(0.3),
+              ),
+            ),
+            
+            // Content
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withOpacity(0.5), width: 2),
+              ),
+              child: Center(
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 5.0,
+                        color: Colors.black,
+                        offset: Offset(2.0, 2.0),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -374,13 +564,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return SliverToBoxAdapter(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.blue[800]!, Colors.purple[700]!],
-          ),
-        ),
+        color: Colors.grey[50],
         child: Column(
           children: [
             const Text(
@@ -388,7 +572,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Colors.black87,
               ),
             ),
             const SizedBox(height: 30),
@@ -411,32 +595,39 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.blue.withOpacity(0.3)),
       ),
       child: Row(
         children: [
           Container(
             width: 40,
             height: 40,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: Colors.blue[800],
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 number,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue[800],
+                  color: Colors.white,
                 ),
               ),
             ),
           ),
           const SizedBox(width: 15),
-          Icon(icon, size: 30, color: Colors.white),
+          Icon(icon, size: 30, color: Colors.blue[800]),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
@@ -444,17 +635,17 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.blue[800],
                   ),
                 ),
                 Text(
                   description,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.black87,
                   ),
                 ),
               ],
@@ -469,7 +660,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return SliverToBoxAdapter(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-        color: Colors.grey[100],
+        color: Colors.white,
         child: Column(
           children: [
             Text(
@@ -540,15 +731,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 5,
-                    offset: Offset(0, 2),
-                  ),
-                ],
+                border: Border.all(color: Colors.blue.withOpacity(0.2)),
               ),
               child: Column(
                 children: [

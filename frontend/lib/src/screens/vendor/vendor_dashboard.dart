@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:maseru_marketplace/src/localization/app_localizations.dart';
-import 'package:maseru_marketplace/src/models/product_model.dart'; // ADD THIS IMPORT
+import 'package:maseru_marketplace/src/models/product_model.dart';
 import 'package:maseru_marketplace/src/providers/product_provider.dart';
 import 'package:maseru_marketplace/src/providers/order_provider.dart';
+import 'package:maseru_marketplace/src/models/order_model.dart';
 import 'package:maseru_marketplace/src/providers/theme_provider.dart';
 import 'package:maseru_marketplace/src/screens/vendor/vendor_products_screen.dart';
-import 'package:maseru_marketplace/src/screens/vendor/vendor_orders.dart';
+import 'package:maseru_marketplace/src/screens/vendor/vendor_orders_screen.dart';
+import 'package:maseru_marketplace/src/screens/passenger/profile_screen.dart';
+import 'package:maseru_marketplace/src/screens/passenger/chat_screen.dart';
 import 'package:maseru_marketplace/src/widgets/common/bottom_nav.dart';
 import 'package:maseru_marketplace/src/widgets/common/add_product_dialog.dart';
 
@@ -21,10 +24,13 @@ class _VendorDashboardState extends State<VendorDashboard> {
   int _currentIndex = 0;
   bool _isLoading = true;
 
+  // Updated screens to include chat and profile
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const VendorProductsScreen(), // Updated to use VendorProductsScreen
-    const VendorOrders(),
+    const VendorProductsScreen(),
+    const VendorOrdersScreen(),
+    const ChatScreen(), // Added chat screen
+    const ProfileScreen(), // Added profile screen
   ];
 
   @override
@@ -62,22 +68,12 @@ class _VendorDashboardState extends State<VendorDashboard> {
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[50],
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(appLocalizations.translate('vendor.dashboard')),
+        title: Text(appLocalizations.translate('vendor.dashboard') ?? 'Vendor Dashboard'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.home),
-            onPressed: () => Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/home',
-              (route) => false,
-            ),
-          ),
+          // Removed chat, profile, and home icons from app bar
+          // Only keeping theme toggle
           IconButton(
             icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => themeProvider.toggleTheme(!isDarkMode),
@@ -106,7 +102,6 @@ class _VendorDashboardState extends State<VendorDashboard> {
       context: context,
       builder: (context) => AddProductDialog(),
     ).then((_) {
-      // Refresh products after dialog closes
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
       productProvider.loadVendorProducts();
     });
@@ -180,47 +175,50 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Stats Grid
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            children: [
-              _buildStatCard(
-                context,
-                title: 'Products',
-                value: totalProducts.toString(),
-                icon: Icons.inventory_2,
-                color: Colors.blue,
-              ),
-              _buildStatCard(
-                context,
-                title: 'Active Orders',
-                value: activeOrders.toString(),
-                icon: Icons.shopping_bag,
-                color: Colors.green,
-              ),
-              _buildStatCard(
-                context,
-                title: 'Completed',
-                value: completedOrders.toString(),
-                icon: Icons.check_circle,
-                color: Colors.purple,
-              ),
-              _buildStatCard(
-                context,
-                title: 'Total Revenue',
-                value: 'LSL ${totalRevenue.toStringAsFixed(2)}',
-                icon: Icons.attach_money,
-                color: Colors.orange,
-              ),
-            ],
+          // Stats Grid - FIXED: Added constrained height
+          SizedBox(
+            height: 200, // Fixed height to prevent unbounded constraints
+            child: GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
+                _buildStatCard(
+                  context,
+                  title: 'Products',
+                  value: totalProducts.toString(),
+                  icon: Icons.inventory_2,
+                  color: Colors.blue,
+                ),
+                _buildStatCard(
+                  context,
+                  title: 'Active Orders',
+                  value: activeOrders.toString(),
+                  icon: Icons.shopping_bag,
+                  color: Colors.green,
+                ),
+                _buildStatCard(
+                  context,
+                  title: 'Completed',
+                  value: completedOrders.toString(),
+                  icon: Icons.check_circle,
+                  color: Colors.purple,
+                ),
+                _buildStatCard(
+                  context,
+                  title: 'Total Revenue',
+                  value: 'LSL ${totalRevenue.toStringAsFixed(2)}',
+                  icon: Icons.attach_money,
+                  color: Colors.orange,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
 
-          // Recent Products Section
+          // Recent Products Section - FIXED: Added constrained height
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -250,7 +248,6 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () {
-                        // Navigate to VendorProductsScreen
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const VendorProductsScreen()),
@@ -268,17 +265,23 @@ class DashboardScreen extends StatelessWidget {
                     subtitle: 'Add your first product to get started',
                   )
                 else
-                  Column(
-                    children: productProvider.vendorProducts.take(3).map((product) {
-                      return _buildProductItem(context, product);
-                    }).toList(),
+                  // FIXED: Added constrained height for product list
+                  SizedBox(
+                    height: 200, // Fixed height
+                    child: ListView(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: productProvider.vendorProducts.take(3).map((product) {
+                        return _buildProductItem(context, product);
+                      }).toList(),
+                    ),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 24),
 
-          // Quick Actions
+          // Quick Actions - Updated to remove redundant buttons
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -323,10 +326,43 @@ class DashboardScreen extends StatelessWidget {
                         label: 'Manage Products',
                         color: Colors.green,
                         onTap: () {
-                          // Navigate to VendorProductsScreen
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (_) => const VendorProductsScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        context,
+                        icon: Icons.shopping_bag,
+                        label: 'View Orders',
+                        color: Colors.purple,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const VendorOrdersScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionButton(
+                        context,
+                        icon: Icons.analytics,
+                        label: 'View Stats',
+                        color: Colors.orange,
+                        onTap: () {
+                          // Already on dashboard, so no navigation needed
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('You are already on the dashboard')),
                           );
                         },
                       ),
@@ -338,7 +374,7 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Recent Orders Section
+          // Recent Orders Section - FIXED: Added constrained height
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -369,7 +405,7 @@ class DashboardScreen extends StatelessWidget {
                     TextButton(
                       onPressed: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const VendorOrders()),
+                        MaterialPageRoute(builder: (_) => const VendorOrdersScreen()),
                       ),
                       child: const Text('View All'),
                     ),
@@ -383,10 +419,16 @@ class DashboardScreen extends StatelessWidget {
                     subtitle: 'Your orders will appear here',
                   )
                 else
-                  Column(
-                    children: orderProvider.vendorOrders.take(3).map((order) {
-                      return _buildOrderItem(context, order);
-                    }).toList(),
+                  // FIXED: Added constrained height for orders list
+                  SizedBox(
+                    height: 200, // Fixed height
+                    child: ListView(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: orderProvider.vendorOrders.take(3).map((order) {
+                        return _buildOrderItem(context, order);
+                      }).toList(),
+                    ),
                   ),
               ],
             ),
@@ -428,7 +470,6 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () {
-                      // Navigate to VendorProductsScreen
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const VendorProductsScreen()),
@@ -582,7 +623,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${product.category} • ${product.displayPrice}',
+                  '${product.category} • LSL ${product.price.toStringAsFixed(2)}',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -648,13 +689,13 @@ class DashboardScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Order #${order.id.substring(0, 8)}',
+                  'Order #${order.id.substring(order.id.length - 6)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
-                  '${order.items.length} items • ${order.displayTotal}',
+                  '${order.items.length} items • LSL ${order.totalAmount.toStringAsFixed(2)}',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -759,7 +800,6 @@ class DashboardScreen extends StatelessWidget {
       context: context,
       builder: (context) => AddProductDialog(),
     ).then((_) {
-      // Refresh products after dialog closes
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
       productProvider.loadVendorProducts();
     });

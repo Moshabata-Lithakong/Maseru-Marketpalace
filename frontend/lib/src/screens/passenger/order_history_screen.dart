@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:maseru_marketplace/src/localization/app_localizations.dart';
 import 'package:maseru_marketplace/src/providers/order_provider.dart';
+import 'package:maseru_marketplace/src/models/order_model.dart'; // NEW: Import Order model
 import 'package:maseru_marketplace/src/widgets/common/loading_indicator.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
@@ -13,7 +14,7 @@ class OrderHistoryScreen extends StatefulWidget {
 
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<String> _orderStatuses = const ['all', 'pending', 'confirmed', 'delivering', 'completed', 'cancelled'];
+  final List<String> _orderStatuses = const ['all', 'pending', 'confirmed', 'preparing', 'ready', 'delivering', 'completed', 'cancelled'];
 
   @override
   void initState() {
@@ -69,13 +70,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
     }
   }
 
-  List<dynamic> _getFilteredOrders(String status, List<dynamic> orders) {
+  // FIXED: Use Order objects instead of dynamic
+  List<Order> _getFilteredOrders(String status, List<Order> orders) {
     if (status == 'all') return orders;
     
-    return orders.where((order) {
-      final orderMap = order as Map<String, dynamic>;
-      return orderMap['status']?.toLowerCase() == status.toLowerCase();
-    }).toList();
+    return orders.where((order) => order.status.toLowerCase() == status.toLowerCase()).toList();
   }
 
   @override
@@ -85,14 +84,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(appLocalizations.translate('orders.history')),
+        title: Text(appLocalizations.translate('orders.history') ?? 'Order History'),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
           tabs: _orderStatuses.map((status) {
             return Tab(
               text: status == 'all' 
-                  ? appLocalizations.translate('orders.all') 
+                  ? appLocalizations.translate('orders.all') ?? 'All'
                   : appLocalizations.translate('orders.$status') ?? status,
             );
           }).toList(),
@@ -113,11 +112,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
                             const Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey),
                             const SizedBox(height: 16),
                             Text(
-                              appLocalizations.translate('orders.no_orders'),
+                              appLocalizations.translate('orders.no_orders') ?? 'No orders found',
                               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                             ),
                             Text(
                               appLocalizations.translate('orders.no_orders_status') ?? 'No orders found for this status',
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           ],
                         ),
@@ -127,13 +127,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
                         itemCount: filteredOrders.length,
                         itemBuilder: (context, index) {
                           final order = filteredOrders[index];
-                          final orderMap = order as Map<String, dynamic>;
-                          final orderStatus = orderMap['status']?.toString() ?? 'pending';
-                          final orderId = orderMap['_id']?.toString() ?? orderMap['id']?.toString() ?? '';
-                          final createdAt = orderMap['createdAt']?.toString() ?? '';
-                          final totalAmount = (orderMap['totalAmount'] as num?)?.toDouble() ?? 0.0;
-                          final items = orderMap['items'] as List<dynamic>? ?? [];
-
+                          
                           return Card(
                             margin: const EdgeInsets.only(bottom: 16),
                             child: Padding(
@@ -145,48 +139,47 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        '${appLocalizations.translate('orders.order')} #${orderId.substring(0, 8)}',
+                                        '${appLocalizations.translate('orders.order') ?? 'Order'} #${order.id.substring(0, 8)}',
                                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                               fontWeight: FontWeight.bold,
                                             ),
                                       ),
                                       Chip(
-                                        avatar: Icon(_getStatusIcon(orderStatus), color: Colors.white),
+                                        avatar: Icon(_getStatusIcon(order.status), color: Colors.white),
                                         label: Text(
-                                          orderStatus.toUpperCase(),
+                                          order.status.toUpperCase(),
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 12,
                                           ),
                                         ),
-                                        backgroundColor: _getStatusColor(orderStatus),
+                                        backgroundColor: _getStatusColor(order.status),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 8),
-                                  Text('${appLocalizations.translate('orders.date')}: ${_formatDate(createdAt)}'),
-                                  Text('${appLocalizations.translate('orders.total')}: LSL ${totalAmount.toStringAsFixed(2)}'),
-                                  Text('${appLocalizations.translate('orders.items')}: ${items.length} ${appLocalizations.translate('orders.products')}'),
+                                  Text('${appLocalizations.translate('orders.date') ?? 'Date'}: ${_formatDate(order.createdAt.toString())}'),
+                                  Text('${appLocalizations.translate('orders.total') ?? 'Total'}: LSL ${order.totalAmount.toStringAsFixed(2)}'),
+                                  Text('${appLocalizations.translate('orders.items') ?? 'Items'}: ${order.items.length} ${appLocalizations.translate('orders.products') ?? 'products'}'),
+                                  const SizedBox(height: 12),
+                                  // FIXED: Show pickup and delivery locations
+                                  _buildLocationInfo(context, order),
                                   const SizedBox(height: 12),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: items.take(2).map((item) {
-                                      final itemMap = item as Map<String, dynamic>;
-                                      final productName = itemMap['productName'] as Map<String, dynamic>? ?? {};
-                                      final quantity = itemMap['quantity'] as int? ?? 0;
-                                      
+                                    children: order.items.take(2).map((item) {
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(vertical: 2.0),
                                         child: Text(
-                                          '• ${productName['en']?.toString() ?? 'Product'} x$quantity',
+                                          '• ${item.productName.en} x${item.quantity}',
                                           style: Theme.of(context).textTheme.bodySmall,
                                         ),
                                       );
                                     }).toList(),
                                   ),
-                                  if (items.length > 2)
+                                  if (order.items.length > 2)
                                     Text(
-                                      '+ ${items.length - 2} ${appLocalizations.translate('orders.more_items') ?? 'more items'}',
+                                      '+ ${order.items.length - 2} ${appLocalizations.translate('orders.more_items') ?? 'more items'}',
                                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                             color: Colors.grey,
                                           ),
@@ -197,17 +190,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
                                       Expanded(
                                         child: OutlinedButton(
                                           onPressed: () {
-                                            _viewOrderDetails(context, orderMap);
+                                            _viewOrderDetails(context, order);
                                           },
                                           child: Text(appLocalizations.translate('orders.view_details') ?? 'View Details'),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      if (orderStatus == 'pending' || orderStatus == 'confirmed')
+                                      if (order.isPending || order.isConfirmed)
                                         Expanded(
                                           child: ElevatedButton(
                                             onPressed: () {
-                                              _cancelOrder(context, orderId);
+                                              _cancelOrder(context, order.id);
                                             },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: Colors.red,
@@ -228,6 +221,46 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
     );
   }
 
+  // NEW: Build location information
+  Widget _buildLocationInfo(BuildContext context, Order order) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.store, size: 16, color: Colors.grey[600]),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Pickup: ${order.pickupDisplayText}',
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Delivery: ${order.destinationDisplayText}',
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);
@@ -237,9 +270,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
     }
   }
 
-  void _viewOrderDetails(BuildContext context, Map<String, dynamic> order) {
+  // FIXED: Use Order object instead of Map
+  void _viewOrderDetails(BuildContext context, Order order) {
     final appLocalizations = AppLocalizations.of(context);
-    final items = order['items'] as List<dynamic>? ?? [];
     
     showDialog(
       context: context,
@@ -250,25 +283,29 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('${appLocalizations.translate('orders.id') ?? 'ID'}: ${order['_id'] ?? order['id']}'),
-              Text('${appLocalizations.translate('orders.status') ?? 'Status'}: ${order['status']}'),
-              Text('${appLocalizations.translate('orders.total') ?? 'Total'}: LSL ${(order['totalAmount'] as num?)?.toDouble() ?? 0.0}'),
-              Text('${appLocalizations.translate('orders.date') ?? 'Date'}: ${_formatDate(order['createdAt']?.toString() ?? '')}'),
+              Text('${appLocalizations.translate('orders.id') ?? 'ID'}: ${order.id}'),
+              Text('${appLocalizations.translate('orders.status') ?? 'Status'}: ${order.status}'),
+              Text('${appLocalizations.translate('orders.total') ?? 'Total'}: LSL ${order.totalAmount.toStringAsFixed(2)}'),
+              Text('${appLocalizations.translate('orders.date') ?? 'Date'}: ${_formatDate(order.createdAt.toString())}'),
               const SizedBox(height: 16),
               Text(
                 appLocalizations.translate('orders.items') ?? 'Items',
                 style: const TextStyle(fontWeight: FontWeight.bold)
               ),
-              ...items.map((item) {
-                final itemMap = item as Map<String, dynamic>;
-                final productName = itemMap['productName'] as Map<String, dynamic>? ?? {};
-                final quantity = itemMap['quantity'] as int? ?? 0;
-                final price = (itemMap['price'] as num?)?.toDouble() ?? 0.0;
-                
+              ...order.items.map((item) {
                 return Text(
-                  '• ${productName['en']?.toString() ?? 'Product'} x$quantity - LSL ${price.toStringAsFixed(2)}'
+                  '• ${item.productName.en} x${item.quantity} - LSL ${item.price.toStringAsFixed(2)}'
                 );
               }),
+              const SizedBox(height: 16),
+              Text(
+                'Location Information',
+                style: const TextStyle(fontWeight: FontWeight.bold)
+              ),
+              Text('Pickup: ${order.pickupDisplayText}'),
+              Text('Delivery: ${order.destinationDisplayText}'),
+              if (order.destination.instructions != null)
+                Text('Instructions: ${order.destination.instructions}'),
             ],
           ),
         ),

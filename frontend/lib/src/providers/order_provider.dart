@@ -1,766 +1,893 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:maseru_marketplace/src/services/api_service.dart';
-import 'package:maseru_marketplace/src/models/product_model.dart';
-
-class Order {
-  final String id;
-  final String passengerId;
-  final String vendorId;
-  final String? taxiDriverId;
-  final List<OrderItem> items;
-  final String status;
-  final double totalAmount;
-  final double deliveryFee;
-  final bool isUrgent;
-  final String? deliveryAddress;
-  
-  // UPDATED: Enhanced pickup location with coordinates
-  final PickupLocation pickupLocation;
-  
-  // UPDATED: Enhanced destination with coordinates and instructions
-  final DeliveryDestination destination;
-  
-  // NEW: Payment information
-  final PaymentInfo payment;
-  
-  final String? notes;
-  final DateTime? estimatedDelivery;
-  final DateTime? actualDelivery;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  Order({
-    required this.id,
-    required this.passengerId,
-    required this.vendorId,
-    this.taxiDriverId,
-    required this.items,
-    required this.status,
-    required this.totalAmount,
-    required this.deliveryFee,
-    required this.isUrgent,
-    this.deliveryAddress,
-    required this.pickupLocation,
-    required this.destination,
-    required this.payment,
-    this.notes,
-    this.estimatedDelivery,
-    this.actualDelivery,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  factory Order.fromJson(Map<String, dynamic> json) {
-    return Order(
-      id: json['_id'] as String? ?? json['id'] as String? ?? '',
-      passengerId: json['passengerId'] as String? ?? '',
-      vendorId: json['vendorId'] as String? ?? '',
-      taxiDriverId: json['taxiDriverId'] as String?,
-      items: (json['items'] as List<dynamic>? ?? [])
-          .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      status: json['status'] as String? ?? 'pending',
-      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
-      deliveryFee: (json['deliveryFee'] as num?)?.toDouble() ?? 0.0,
-      isUrgent: json['isUrgent'] as bool? ?? false,
-      deliveryAddress: json['deliveryAddress'] as String?,
-      
-      // UPDATED: Enhanced pickup location parsing
-      pickupLocation: PickupLocation.fromJson(
-        json['pickupLocation'] as Map<String, dynamic>? ?? {},
-      ),
-      
-      // UPDATED: Enhanced destination parsing
-      destination: DeliveryDestination.fromJson(
-        json['destination'] as Map<String, dynamic>? ?? {},
-      ),
-      
-      // NEW: Payment info parsing
-      payment: PaymentInfo.fromJson(
-        json['payment'] as Map<String, dynamic>? ?? {},
-      ),
-      
-      notes: json['notes'] as String?,
-      estimatedDelivery: json['estimatedDelivery'] != null
-          ? DateTime.tryParse(json['estimatedDelivery'] as String)
-          : null,
-      actualDelivery: json['actualDelivery'] != null
-          ? DateTime.tryParse(json['actualDelivery'] as String)
-          : null,
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ?? DateTime.now(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'passengerId': passengerId,
-      'vendorId': vendorId,
-      'taxiDriverId': taxiDriverId,
-      'items': items.map((item) => item.toJson()).toList(),
-      'status': status,
-      'totalAmount': totalAmount,
-      'deliveryFee': deliveryFee,
-      'isUrgent': isUrgent,
-      'deliveryAddress': deliveryAddress,
-      'pickupLocation': pickupLocation.toJson(),
-      'destination': destination.toJson(),
-      'payment': payment.toJson(),
-      'notes': notes,
-      'estimatedDelivery': estimatedDelivery?.toIso8601String(),
-      'actualDelivery': actualDelivery?.toIso8601String(),
-    };
-  }
-
-  String get displayTotal => 'LSL ${totalAmount.toStringAsFixed(2)}';
-  bool get isPending => status == 'pending';
-  bool get isConfirmed => status == 'confirmed';
-  bool get isPreparing => status == 'preparing';
-  bool get isReady => status == 'ready';
-  bool get isDelivering => status == 'delivering';
-  bool get isCompleted => status == 'completed';
-  bool get isCancelled => status == 'cancelled';
-  bool get requiresDelivery => deliveryAddress != null;
-  
-  // NEW: Payment status helpers
-  bool get isPaymentPending => payment.status == 'pending';
-  bool get isPaymentCompleted => payment.status == 'completed';
-  bool get isPaymentFailed => payment.status == 'failed';
-}
-
-// NEW: Enhanced pickup location class
-class PickupLocation {
-  final String address;
-  final LocationCoordinates? coordinates;
-  final String? vendorName;
-  final String? vendorPhone;
-
-  PickupLocation({
-    required this.address,
-    this.coordinates,
-    this.vendorName,
-    this.vendorPhone,
-  });
-
-  factory PickupLocation.fromJson(Map<String, dynamic> json) {
-    return PickupLocation(
-      address: json['address'] as String? ?? '',
-      coordinates: json['coordinates'] != null 
-          ? LocationCoordinates.fromJson(json['coordinates'] as Map<String, dynamic>)
-          : null,
-      vendorName: json['vendorName'] as String?,
-      vendorPhone: json['vendorPhone'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'address': address,
-      'coordinates': coordinates?.toJson(),
-      'vendorName': vendorName,
-      'vendorPhone': vendorPhone,
-    };
-  }
-}
-
-// NEW: Enhanced delivery destination class
-class DeliveryDestination {
-  final String address;
-  final LocationCoordinates? coordinates;
-  final String? instructions;
-  final String? passengerName;
-  final String? passengerPhone;
-
-  DeliveryDestination({
-    required this.address,
-    this.coordinates,
-    this.instructions,
-    this.passengerName,
-    this.passengerPhone,
-  });
-
-  factory DeliveryDestination.fromJson(Map<String, dynamic> json) {
-    return DeliveryDestination(
-      address: json['address'] as String? ?? '',
-      coordinates: json['coordinates'] != null 
-          ? LocationCoordinates.fromJson(json['coordinates'] as Map<String, dynamic>)
-          : null,
-      instructions: json['instructions'] as String?,
-      passengerName: json['passengerName'] as String?,
-      passengerPhone: json['passengerPhone'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'address': address,
-      'coordinates': coordinates?.toJson(),
-      'instructions': instructions,
-      'passengerName': passengerName,
-      'passengerPhone': passengerPhone,
-    };
-  }
-}
-
-// NEW: Location coordinates class
-class LocationCoordinates {
-  final double latitude;
-  final double longitude;
-
-  LocationCoordinates({
-    required this.latitude,
-    required this.longitude,
-  });
-
-  factory LocationCoordinates.fromJson(Map<String, dynamic> json) {
-    return LocationCoordinates(
-      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
-      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'latitude': latitude,
-      'longitude': longitude,
-    };
-  }
-}
-
-// NEW: Payment information class
-class PaymentInfo {
-  final String method;
-  final String status;
-  final String? transactionId;
-  final String? phoneNumber;
-  final double amount;
-  final DateTime? paymentDate;
-
-  PaymentInfo({
-    required this.method,
-    required this.status,
-    this.transactionId,
-    this.phoneNumber,
-    required this.amount,
-    this.paymentDate,
-  });
-
-  factory PaymentInfo.fromJson(Map<String, dynamic> json) {
-    return PaymentInfo(
-      method: json['method'] as String? ?? 'cash',
-      status: json['status'] as String? ?? 'pending',
-      transactionId: json['transactionId'] as String?,
-      phoneNumber: json['phoneNumber'] as String?,
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      paymentDate: json['paymentDate'] != null
-          ? DateTime.tryParse(json['paymentDate'] as String)
-          : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'method': method,
-      'status': status,
-      'transactionId': transactionId,
-      'phoneNumber': phoneNumber,
-      'amount': amount,
-      'paymentDate': paymentDate?.toIso8601String(),
-    };
-  }
-
-  bool get isCash => method == 'cash';
-  bool get isMpesa => method == 'mpesa';
-  bool get isEcocash => method == 'ecocash';
-}
-
-class OrderItem {
-  final String productId;
-  final ProductName productName;
-  final int quantity;
-  final double price;
-
-  OrderItem({
-    required this.productId,
-    required this.productName,
-    required this.quantity,
-    required this.price,
-  });
-
-  factory OrderItem.fromJson(Map<String, dynamic> json) {
-    return OrderItem(
-      productId: json['productId'] as String? ?? '',
-      productName: ProductName.fromJson(json['productName'] as Map<String, dynamic>? ?? {}),
-      quantity: json['quantity'] as int? ?? 0,
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'productId': productId,
-      'productName': productName.toJson(),
-      'quantity': quantity,
-      'price': price,
-    };
-  }
-
-  double get subtotal => quantity * price;
-}
+import 'package:maseru_marketplace/src/models/order_model.dart';
 
 class OrderProvider with ChangeNotifier {
   final ApiService _apiService;
   List<Order> _orders = [];
   List<Order> _vendorOrders = [];
   List<Order> _driverOrders = [];
+  List<Order> _acceptedOrders = []; // NEW: Track accepted orders separately
   bool _isLoading = false;
   String? _error;
-
-  // NEW: Earnings tracking properties
-  double _pendingEarnings = 0.0;
-  Map<String, double> _earningsBreakdown = {
-    'today': 0.0,
-    'thisWeek': 0.0,
-    'thisMonth': 0.0,
-    'allTime': 0.0,
-  };
+  double _driverEarnings = 0.0; // NEW: Track driver earnings
+  int _completedOrdersCount = 0; // NEW: Track completed orders count
 
   OrderProvider(this._apiService);
 
   List<Order> get orders => _orders;
   List<Order> get vendorOrders => _vendorOrders;
   List<Order> get driverOrders => _driverOrders;
+  List<Order> get acceptedOrders => _acceptedOrders; // NEW: Getter for accepted orders
   bool get isLoading => _isLoading;
   String? get error => _error;
+  double get driverEarnings => _driverEarnings; // NEW: Getter for earnings
+  int get completedOrdersCount => _completedOrdersCount; // NEW: Getter for completed count
 
-  // NEW: Add the missing properties that were causing errors
-  double get pendingEarnings => _pendingEarnings;
-  Map<String, double> get earningsBreakdown => _earningsBreakdown;
+  // NEW: Enhanced earnings breakdown
+  Map<String, dynamic> get earningsBreakdown {
+    try {
+      final completedOrders = _driverOrders.where((order) => order.isCompleted);
+      final totalEarnings = completedOrders.fold(0.0, (sum, order) => sum + order.deliveryFee);
+      final pendingOrders = _driverOrders.where((order) => order.isDelivering);
+      final pendingEarnings = pendingOrders.fold(0.0, (sum, order) => sum + order.deliveryFee);
+      
+      return {
+        'total': totalEarnings,
+        'pending': pendingEarnings,
+        'completedCount': completedOrders.length,
+        'pendingCount': pendingOrders.length,
+      };
+    } catch (e) {
+      print('❌ ERROR in earningsBreakdown: $e');
+      return {
+        'total': 0.0,
+        'pending': 0.0,
+        'completedCount': 0,
+        'pendingCount': 0,
+      };
+    }
+  }
 
-  // UPDATED: Create order with enhanced location and payment
+  double get pendingEarnings {
+    try {
+      return _driverOrders
+          .where((order) => order.isDelivering)
+          .fold(0.0, (sum, order) => sum + order.deliveryFee);
+    } catch (e) {
+      print('❌ ERROR in pendingEarnings: $e');
+      return 0.0;
+    }
+  }
+
+  Future<void> fetchOrders({required String role}) async {
+    print('🔍 OrderProvider.fetchOrders called for role: $role');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      switch (role) {
+        case 'taxi_driver':
+          await loadDriverOrders(); // Load both available and assigned orders
+          await getDriverDeliveryEarnings(); // NEW: Load earnings for drivers
+          break;
+        case 'vendor':
+          await loadVendorOrders();
+          break;
+        case 'passenger':
+          await loadPassengerOrders();
+          break;
+        default:
+          throw Exception('Invalid role: $role');
+      }
+      print('✅ OrderProvider.fetchOrders completed successfully for role: $role');
+    } catch (e) {
+      _error = 'Error fetching orders: $e';
+      print('❌ ERROR in OrderProvider.fetchOrders: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // FIXED: Enhanced createOrder method with proper delivery location handling
   Future<bool> createOrder({
+    required String vendorId,
     required List<Map<String, dynamic>> items,
-    required double totalAmount,
-    required String destinationAddress,
+    required double destinationLatitude,
+    required double destinationLongitude,
     required String paymentMethod,
     String? pickupAddress,
+    String? destinationAddress,
     String? destinationInstructions,
-    double? destinationLatitude,
-    double? destinationLongitude,
     double? pickupLatitude,
     double? pickupLongitude,
     String? phoneNumber,
     bool isUrgent = false,
     String? notes,
+    required String vendorName,
+    required String vendorPhone,
+    required String passengerName,
+    required String passengerPhone,
   }) async {
+    print('🛒 OrderProvider.createOrder called');
+    print('📦 Vendor ID: $vendorId');
+    print('💰 Payment Method: $paymentMethod');
+    print('📍 Destination: ($destinationLatitude, $destinationLongitude)');
+    print('📍 Destination Address: $destinationAddress');
+    print('📋 Items count: ${items.length}');
+    
     _isLoading = true;
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
 
     try {
-      // Build enhanced destination
-      final destination = {
-        'address': destinationAddress,
-        if (destinationInstructions != null) 'instructions': destinationInstructions,
-        if (destinationLatitude != null && destinationLongitude != null)
+      // Calculate delivery fee based on urgency
+      final deliveryFee = isUrgent ? 25.0 : 15.0;
+      final itemsTotal = _calculateTotalAmount(items);
+      final totalAmount = itemsTotal + deliveryFee;
+
+      // FIXED: Ensure destination address is properly set
+      final String finalDestinationAddress = destinationAddress ?? 'Passenger Location';
+      
+      final Map<String, dynamic> orderData = {
+        'items': items,
+        'pickupLocation': {
+          'address': pickupAddress ?? 'Vendor Location',
+          'coordinates': {
+            'latitude': pickupLatitude ?? -29.3100,
+            'longitude': pickupLongitude ?? 27.4800,
+          },
+          'vendorName': vendorName,
+          'vendorPhone': vendorPhone,
+        },
+        'destination': {
+          'address': finalDestinationAddress,
           'coordinates': {
             'latitude': destinationLatitude,
             'longitude': destinationLongitude,
           },
-      };
-
-      // Build enhanced pickup location (use vendor's location or provided address)
-      final pickupLocation = {
-        'address': pickupAddress ?? 'Vendor Location', // Default to vendor location
-        if (pickupLatitude != null && pickupLongitude != null)
-          'coordinates': {
-            'latitude': pickupLatitude,
-            'longitude': pickupLongitude,
-          },
-      };
-
-      // Build payment info
-      final payment = {
-        'method': paymentMethod,
-        if (phoneNumber != null && (paymentMethod == 'mpesa' || paymentMethod == 'ecocash'))
+          'instructions': destinationInstructions,
+          'passengerName': passengerName,
+          'passengerPhone': passengerPhone,
+        },
+        'payment': {
+          'method': paymentMethod,
           'phoneNumber': phoneNumber,
-      };
-
-      final data = {
-        'items': items,
-        'totalAmount': totalAmount,
-        'pickupLocation': pickupLocation,
-        'destination': destination,
-        'payment': payment,
+        },
         'isUrgent': isUrgent,
         'notes': notes,
-        'deliveryFee': isUrgent ? 25.0 : 15.0, // Example delivery fees
+        'deliveryFee': deliveryFee,
+        'totalAmount': totalAmount,
       };
 
-      print('📦 Creating order with enhanced locations and payment');
-      final response = await _apiService.post('orders', data);
+      print('📦 Creating order with delivery fee: LSL $deliveryFee');
+      print('💰 Total amount: LSL $totalAmount');
+      print('📍 Final destination: $finalDestinationAddress');
       
+      final response = await _apiService.post('orders', orderData);
+
       _isLoading = false;
+
+      print('📡 API Response status: ${response['status']}');
       
       if (response['status'] == 'success') {
         final newOrder = Order.fromJson(response['data']?['order'] ?? response);
         _orders.add(newOrder);
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        print('✅ Order created successfully with ID: ${newOrder.id}');
+        print('🚚 Delivery fee set: LSL ${newOrder.deliveryFee}');
+        print('📍 Delivery location: ${newOrder.destination.address}');
+        notifyListeners();
         return true;
       } else {
         _error = response['message'] ?? 'Failed to create order';
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        print('❌ Order creation failed: $_error');
+        print('📡 Full response: $response');
+        notifyListeners();
         return false;
       }
     } catch (e) {
       _isLoading = false;
       _error = 'Error creating order: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      print('❌ ERROR in OrderProvider.createOrder: $e');
+      print('📋 Stack trace: ${e.toString()}');
+      notifyListeners();
       return false;
     }
   }
 
-  // UPDATED: Load passenger orders with safe state updates
-  Future<void> loadPassengerOrders() async {
+  // FIXED: Enhanced loadAvailableDeliveryOrders method
+  Future<void> loadAvailableDeliveryOrders() async {
+    print('🚚 OrderProvider.loadAvailableDeliveryOrders called');
     _isLoading = true;
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-
-    try {
-      final response = await _apiService.get('orders/my-orders');
-      if (response['status'] == 'success') {
-        final ordersData = response['data']?['orders'] as List? ?? [];
-        _orders = ordersData.map((orderJson) => Order.fromJson(orderJson)).toList();
-        _error = null;
-      } else {
-        _error = response['message'] ?? 'Failed to load orders';
-      }
-    } catch (e) {
-      _error = 'Error loading orders: $e';
-    } finally {
-      _isLoading = false;
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-    }
-  }
-
-  // UPDATED: Load vendor orders with safe state updates
-  Future<void> loadVendorOrders() async {
-    _isLoading = true;
-    _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-
-    try {
-      final response = await _apiService.get('orders/vendor/my-orders');
-      if (response['status'] == 'success') {
-        final ordersData = response['data']?['orders'] as List? ?? [];
-        _vendorOrders = ordersData.map((orderJson) => Order.fromJson(orderJson)).toList();
-        _error = null;
-      } else {
-        _error = response['message'] ?? 'Failed to load vendor orders';
-      }
-    } catch (e) {
-      _error = 'Error loading vendor orders: $e';
-    } finally {
-      _isLoading = false;
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-    }
-  }
-
-  // UPDATED: Load driver orders with safe state updates
-  Future<void> loadDriverOrders() async {
-    _isLoading = true;
-    _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
 
     try {
       final response = await _apiService.get('orders/driver/available');
+      print('📡 Available delivery orders API response received');
+      
       if (response['status'] == 'success') {
         final ordersData = response['data']?['orders'] as List? ?? [];
         _driverOrders = ordersData.map((orderJson) => Order.fromJson(orderJson)).toList();
         _error = null;
-        print('✅ Loaded ${_driverOrders.length} driver orders with enhanced location data');
+        print('✅ Loaded ${_driverOrders.length} available delivery orders');
         
-        // NEW: Calculate earnings when loading driver orders
-        _calculateEarnings();
+        // Debug print delivery orders with fees
+        for (var order in _driverOrders) {
+          print('📦 Delivery Order: ${order.id} | Fee: LSL ${order.deliveryFee} | Status: ${order.status} | Payment: ${order.payment.status}');
+        }
       } else {
-        _error = response['message'] ?? 'Failed to load driver orders';
+        _error = response['message'] ?? 'Failed to load available delivery orders';
+        print('❌ Failed to load delivery orders: $_error');
+        print('📡 Response: $response');
       }
     } catch (e) {
-      _error = 'Error loading driver orders: $e';
+      _error = 'Error loading available delivery orders: $e';
+      print('❌ ERROR in OrderProvider.loadAvailableDeliveryOrders: $e');
     } finally {
       _isLoading = false;
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      notifyListeners();
     }
   }
 
-  // NEW: Calculate earnings breakdown
-  void _calculateEarnings() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final weekStart = today.subtract(Duration(days: today.weekday - 1));
-    final monthStart = DateTime(now.year, now.month, 1);
+  // FIXED: Enhanced acceptDeliveryAssignment method
+  Future<bool> acceptDeliveryAssignment(String orderId) async {
+    print('✅ OrderProvider.acceptDeliveryAssignment called for order: $orderId');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
 
-    double todayEarnings = 0.0;
-    double weekEarnings = 0.0;
-    double monthEarnings = 0.0;
-    double allTimeEarnings = 0.0;
-    double pending = 0.0;
-
-    for (final order in _driverOrders) {
-      final deliveryFee = order.deliveryFee;
-      final orderDate = order.createdAt;
-
-      if (order.isCompleted) {
-        allTimeEarnings += deliveryFee;
-
-        if (orderDate.isAfter(today)) {
-          todayEarnings += deliveryFee;
-        }
-
-        if (orderDate.isAfter(weekStart)) {
-          weekEarnings += deliveryFee;
-        }
-
-        if (orderDate.isAfter(monthStart)) {
-          monthEarnings += deliveryFee;
-        }
-      } else if (order.isDelivering || order.isReady) {
-        // Orders that are in progress but not completed are considered pending earnings
-        pending += deliveryFee;
-      }
-    }
-
-    _earningsBreakdown = {
-      'today': todayEarnings,
-      'thisWeek': weekEarnings,
-      'thisMonth': monthEarnings,
-      'allTime': allTimeEarnings,
-    };
-
-    _pendingEarnings = pending;
-  }
-
-  // NEW: Load driver earnings specifically
-  Future<void> loadDriverEarnings() async {
     try {
-      final response = await _apiService.get('orders/driver/earnings');
+      final response = await _apiService.patch('orders/driver/$orderId/accept', {});
+
+      _isLoading = false;
+
       if (response['status'] == 'success') {
-        final earningsData = response['data']?['earnings'] ?? {};
-        _pendingEarnings = (earningsData['pending'] as num?)?.toDouble() ?? 0.0;
-        _earningsBreakdown = {
-          'today': (earningsData['today'] as num?)?.toDouble() ?? 0.0,
-          'thisWeek': (earningsData['thisWeek'] as num?)?.toDouble() ?? 0.0,
-          'thisMonth': (earningsData['thisMonth'] as num?)?.toDouble() ?? 0.0,
-          'allTime': (earningsData['allTime'] as num?)?.toDouble() ?? 0.0,
-        };
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        final orderData = response['data']?['order'] ?? response;
+        final acceptedOrder = Order.fromJson(orderData);
+        
+        // Remove from available orders and add to accepted orders
+        _driverOrders.removeWhere((order) => order.id == orderId);
+        _acceptedOrders.add(acceptedOrder);
+        
+        final deliveryFee = acceptedOrder.deliveryFee;
+        
+        print('✅ Delivery assignment accepted successfully');
+        print('💰 Delivery fee: LSL $deliveryFee');
+        print('📍 Delivery to: ${acceptedOrder.destination.address}');
+        
+        notifyListeners();
+        return true;
+      } else {
+        _error = response['message'] ?? 'Failed to accept delivery assignment';
+        print('❌ Delivery assignment failed: $_error');
+        notifyListeners();
+        return false;
       }
     } catch (e) {
-      print('Error loading driver earnings: $e');
-      // Fallback to calculating from local orders
-      _calculateEarnings();
+      _isLoading = false;
+      _error = 'Error accepting delivery assignment: $e';
+      print('❌ ERROR in OrderProvider.acceptDeliveryAssignment: $e');
+      notifyListeners();
+      return false;
     }
   }
 
-  // UPDATED: Update order status with safe state updates and earnings recalculation
-  Future<bool> updateOrderStatus(String orderId, String status) async {
+  // FIXED: Enhanced completeDelivery method
+  Future<bool> completeDelivery(String orderId) async {
+    print('🏁 OrderProvider.completeDelivery called for order: $orderId');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
     try {
-      final response = await _apiService.patch('orders/$orderId', {
-        'status': status,
-      });
+      final response = await _apiService.patch('orders/driver/$orderId/complete', {});
+
+      _isLoading = false;
+
+      if (response['status'] == 'success') {
+        // Remove from accepted orders
+        _acceptedOrders.removeWhere((order) => order.id == orderId);
+        
+        // Update earnings
+        await getDriverDeliveryEarnings();
+        
+        print('✅ Delivery completed successfully!');
+        print('💰 Earnings updated');
+        
+        notifyListeners();
+        return true;
+      } else {
+        _error = response['message'] ?? 'Failed to complete delivery';
+        print('❌ Delivery completion failed: $_error');
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Error completing delivery: $e';
+      print('❌ ERROR in OrderProvider.completeDelivery: $e');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // FIXED: Enhanced getDriverDeliveryEarnings method
+  Future<Map<String, dynamic>?> getDriverDeliveryEarnings() async {
+    print('💰 OrderProvider.getDriverDeliveryEarnings called');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.get('orders/driver/earnings');
+
+      _isLoading = false;
       
       if (response['status'] == 'success') {
+        final earningsData = response['data']?['earnings'];
+        final recentDeliveries = response['data']?['recentDeliveries'];
+        
+        // Update local state
+        _driverEarnings = (earningsData?['totalEarnings'] ?? 0).toDouble();
+        _completedOrdersCount = earningsData?['totalDeliveries'] ?? 0;
+        
+        print('✅ Loaded driver delivery earnings');
+        print('📊 Total earnings: LSL $_driverEarnings');
+        print('📦 Completed deliveries: $_completedOrdersCount');
+        
+        notifyListeners();
+        return {
+          'summary': earningsData,
+          'recentDeliveries': recentDeliveries,
+        };
+      } else {
+        _error = response['message'] ?? 'Failed to load earnings';
+        print('❌ Failed to load earnings: $_error');
+        return null;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Error loading driver delivery earnings: $e';
+      print('❌ ERROR in OrderProvider.getDriverDeliveryEarnings: $e');
+      return null;
+    }
+  }
+
+  // FIXED: Enhanced loadDriverAssignedDeliveries method
+  Future<void> loadDriverAssignedDeliveries() async {
+    print('📋 OrderProvider.loadDriverAssignedDeliveries called');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.get('orders/driver/assigned');
+      
+      _isLoading = false;
+
+      if (response['status'] == 'success') {
+        final ordersData = response['data']?['orders'] as List? ?? [];
+        final assignedOrders = ordersData.map((orderJson) => Order.fromJson(orderJson)).toList();
+        
+        // Update accepted orders
+        _acceptedOrders = assignedOrders;
+        
+        print('✅ Loaded ${_acceptedOrders.length} assigned deliveries');
+        for (var order in _acceptedOrders) {
+          print('📦 Assigned Order: ${order.id} | Status: ${order.status} | To: ${order.destination.address}');
+        }
+      } else {
+        _error = response['message'] ?? 'Failed to load assigned deliveries';
+        print('❌ Failed to load assigned deliveries: $_error');
+      }
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Error loading assigned deliveries: $e';
+      print('❌ ERROR in OrderProvider.loadDriverAssignedDeliveries: $e');
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  // FIXED: Enhanced loadDriverOrders method
+  Future<void> loadDriverOrders() async {
+    print('🚕 OrderProvider.loadDriverOrders called');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Load both available and assigned orders
+      await Future.wait([
+        loadAvailableDeliveryOrders(),
+        loadDriverAssignedDeliveries(),
+      ]);
+      print('✅ Loaded all driver orders (available + assigned)');
+    } catch (e) {
+      _error = 'Error loading driver orders: $e';
+      print('❌ ERROR in OrderProvider.loadDriverOrders: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // FIXED: Enhanced createOrderWithPayment method
+  Future<bool> createOrderWithPayment({
+    required String vendorId,
+    required List<Map<String, dynamic>> items,
+    required double destinationLatitude,
+    required double destinationLongitude,
+    required String paymentMethod,
+    String? pickupAddress,
+    String? destinationAddress,
+    String? destinationInstructions,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    String? phoneNumber,
+    bool isUrgent = false,
+    String? notes,
+    required String vendorName,
+    required String vendorPhone,
+    required String passengerName,
+    required String passengerPhone,
+  }) async {
+    print('🛒 OrderProvider.createOrderWithPayment called');
+    
+    return await createOrder(
+      vendorId: vendorId,
+      items: items,
+      destinationLatitude: destinationLatitude,
+      destinationLongitude: destinationLongitude,
+      paymentMethod: paymentMethod,
+      pickupAddress: pickupAddress,
+      destinationAddress: destinationAddress,
+      destinationInstructions: destinationInstructions,
+      pickupLatitude: pickupLatitude,
+      pickupLongitude: pickupLongitude,
+      phoneNumber: phoneNumber,
+      isUrgent: isUrgent,
+      notes: notes,
+      vendorName: vendorName,
+      vendorPhone: vendorPhone,
+      passengerName: passengerName,
+      passengerPhone: passengerPhone,
+    );
+  }
+
+  double _calculateTotalAmount(List<Map<String, dynamic>> items) {
+    try {
+      double total = 0.0;
+      for (var item in items) {
+        final price = (item['price'] as num?)?.toDouble() ?? 0.0;
+        final quantity = (item['quantity'] as int?) ?? 0;
+        total += price * quantity;
+      }
+      return total;
+    } catch (e) {
+      print('❌ ERROR in _calculateTotalAmount: $e');
+      return 0.0;
+    }
+  }
+
+  Future<bool> rejectDeliveryAssignment(String orderId) async {
+    print('❌ OrderProvider.rejectDeliveryAssignment called for order: $orderId');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.patch('orders/driver/$orderId/reject', {});
+
+      _isLoading = false;
+
+      if (response['status'] == 'success') {
+        // Remove from available orders
+        _driverOrders.removeWhere((order) => order.id == orderId);
+        print('✅ Delivery assignment rejected');
+        notifyListeners();
+        return true;
+      } else {
+        _error = response['message'] ?? 'Failed to reject delivery assignment';
+        print('❌ Delivery rejection failed: $_error');
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Error rejecting delivery assignment: $e';
+      print('❌ ERROR in OrderProvider.rejectDeliveryAssignment: $e');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> startDelivery(String orderId) async {
+    print('🚀 OrderProvider.startDelivery called for order: $orderId');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.patch('orders/driver/$orderId/start', {});
+
+      _isLoading = false;
+
+      if (response['status'] == 'success') {
+        print('✅ Delivery started - order picked up from vendor');
+        notifyListeners();
+        return true;
+      } else {
+        _error = response['message'] ?? 'Failed to start delivery';
+        print('❌ Delivery start failed: $_error');
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Error starting delivery: $e';
+      print('❌ ERROR in OrderProvider.startDelivery: $e');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> assignDriver(String orderId, String driverId) async {
+    print('🚗 OrderProvider.assignDriver called for order: $orderId, driver: $driverId');
+    try {
+      final response = await _apiService.patch('orders/$orderId/assign-driver', {
+        'driverId': driverId,
+      });
+
+      if (response['status'] == 'success') {
         final updatedOrderData = response['data']?['order'] ?? response;
-        // Update in all order lists
+        _updateOrderInList(_driverOrders, orderId, updatedOrderData);
+        _updateOrderInList(_orders, orderId, updatedOrderData);
+        print('✅ Driver assigned successfully');
+        notifyListeners();
+        return true;
+      }
+      print('❌ Driver assignment failed: ${response['message']}');
+      return false;
+    } catch (e) {
+      _error = 'Error assigning driver: $e';
+      print('❌ ERROR in OrderProvider.assignDriver: $e');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // FIXED: Enhanced loadPassengerOrders method
+  Future<void> loadPassengerOrders() async {
+    print('👤 OrderProvider.loadPassengerOrders called');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.get('orders/my-orders');
+      print('📡 Passenger orders API response received');
+      
+      if (response['status'] == 'success') {
+        final ordersData = response['data']?['orders'] as List? ?? [];
+        _orders = ordersData.map((orderJson) => Order.fromJson(orderJson)).toList();
+        _error = null;
+        print('✅ Loaded ${_orders.length} passenger orders');
+        
+        // Debug print passenger orders with delivery locations
+        for (var order in _orders) {
+          print('📦 Passenger Order: ${order.id} | Status: ${order.status} | To: ${order.destination.address}');
+        }
+      } else {
+        _error = response['message'] ?? 'Failed to load orders';
+        print('❌ Failed to load passenger orders: $_error');
+      }
+    } catch (e) {
+      _error = 'Error loading orders: $e';
+      print('❌ ERROR in OrderProvider.loadPassengerOrders: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // FIXED: Enhanced loadVendorOrders method
+  Future<void> loadVendorOrders() async {
+    print('🏪 OrderProvider.loadVendorOrders called');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.get('orders/vendor/my-orders');
+      print('📡 Vendor orders API response received');
+      
+      if (response['status'] == 'success') {
+        final ordersData = response['data']?['orders'] as List? ?? [];
+        _vendorOrders = ordersData.map((orderJson) => Order.fromJson(orderJson)).toList();
+        _error = null;
+        print('✅ Loaded ${_vendorOrders.length} vendor orders');
+      } else {
+        _error = response['message'] ?? 'Failed to load vendor orders';
+        print('❌ Failed to load vendor orders: $_error');
+      }
+    } catch (e) {
+      _error = 'Error loading vendor orders: $e';
+      print('❌ ERROR in OrderProvider.loadVendorOrders: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // FIXED: Enhanced updateOrderStatus method - allows passenger cancellation
+  Future<bool> updateOrderStatus(String orderId, String status) async {
+    print('🔄 OrderProvider.updateOrderStatus called for order: $orderId, status: $status');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.patch('orders/$orderId/status', {
+        'status': status,
+      });
+
+      _isLoading = false;
+
+      if (response['status'] == 'success') {
+        final updatedOrderData = response['data']?['order'] ?? response;
         _updateOrderInList(_orders, orderId, updatedOrderData);
         _updateOrderInList(_vendorOrders, orderId, updatedOrderData);
         _updateOrderInList(_driverOrders, orderId, updatedOrderData);
-        
-        // Recalculate earnings when order status changes
-        _calculateEarnings();
-        
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        _updateOrderInList(_acceptedOrders, orderId, updatedOrderData);
+        print('✅ Order status updated successfully to: $status');
+        notifyListeners();
         return true;
+      } else {
+        _error = response['message'] ?? 'Failed to update order status';
+        print('❌ Order status update failed: $_error');
+        notifyListeners();
+        return false;
       }
-      return false;
     } catch (e) {
+      _isLoading = false;
       _error = 'Error updating order status: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      print('❌ ERROR in OrderProvider.updateOrderStatus: $e');
+      notifyListeners();
       return false;
     }
   }
 
-  // UPDATED: Accept delivery as driver with safe state updates
-  Future<bool> acceptDelivery(String orderId) async {
+  Future<bool> initiateMpesaPayment(String orderId, String phoneNumber, double amount) async {
+    print('📱 OrderProvider.initiateMpesaPayment called for order: $orderId');
     try {
-      final response = await _apiService.patch('orders/$orderId/accept', {});
-      
+      final response = await _apiService.post('payments/mpesa/initiate', {
+        'orderId': orderId,
+        'phoneNumber': phoneNumber,
+        'amount': amount,
+      });
+
       if (response['status'] == 'success') {
-        final updatedOrderData = response['data']?['order'] ?? response;
-        _updateOrderInList(_driverOrders, orderId, updatedOrderData);
-        
-        // Recalculate earnings
-        _calculateEarnings();
-        
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        print('✅ M-Pesa payment initiated successfully');
+        notifyListeners();
         return true;
       }
+      print('❌ M-Pesa payment initiation failed: ${response['message']}');
       return false;
     } catch (e) {
-      _error = 'Error accepting delivery: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      _error = 'Error initiating Mpesa payment: $e';
+      print('❌ ERROR in OrderProvider.initiateMpesaPayment: $e');
+      notifyListeners();
       return false;
     }
   }
 
-  // UPDATED: Complete delivery with safe state updates
-  Future<bool> completeDelivery(String orderId) async {
+  Future<bool> initiateEcocashPayment(String orderId, String phoneNumber, double amount) async {
+    print('📱 OrderProvider.initiateEcocashPayment called for order: $orderId');
     try {
-      final response = await _apiService.patch('orders/$orderId/complete', {});
-      
-      if (response['status'] == 'success') {
-        final updatedOrderData = response['data']?['order'] ?? response;
-        _updateOrderInList(_driverOrders, orderId, updatedOrderData);
-        
-        // Recalculate earnings
-        _calculateEarnings();
-        
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-        return true;
-      }
-      return false;
-    } catch (e) {
-      _error = 'Error completing delivery: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-      return false;
-    }
-  }
+      final response = await _apiService.post('payments/ecocash/initiate', {
+        'orderId': orderId,
+        'phoneNumber': phoneNumber,
+        'amount': amount,
+      });
 
-  // NEW: Initiate M-Pesa payment
-  Future<bool> initiateMpesaPayment({
-    required String orderId,
-    required String phoneNumber,
-    required double amount,
-  }) async {
-    try {
-      final response = await _apiService.initiateMpesaPayment(
-        orderId: orderId,
-        phoneNumber: phoneNumber,
-        amount: amount,
-      );
-      
       if (response['status'] == 'success') {
+        print('✅ EcoCash payment initiated successfully');
+        notifyListeners();
         return true;
-      } else {
-        _error = response['message'] ?? 'M-Pesa payment failed';
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-        return false;
       }
-    } catch (e) {
-      _error = 'M-Pesa payment error: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      print('❌ EcoCash payment initiation failed: ${response['message']}');
       return false;
-    }
-  }
-
-  // NEW: Initiate EcoCash payment
-  Future<bool> initiateEcocashPayment({
-    required String orderId,
-    required String phoneNumber,
-    required double amount,
-  }) async {
-    try {
-      final response = await _apiService.initiateEcocashPayment(
-        orderId: orderId,
-        phoneNumber: phoneNumber,
-        amount: amount,
-      );
-      
-      if (response['status'] == 'success') {
-        return true;
-      } else {
-        _error = response['message'] ?? 'EcoCash payment failed';
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-        return false;
-      }
     } catch (e) {
-      _error = 'EcoCash payment error: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      _error = 'Error initiating Ecocash payment: $e';
+      print('❌ ERROR in OrderProvider.initiateEcocashPayment: $e');
+      notifyListeners();
       return false;
     }
   }
 
   void _updateOrderInList(List<Order> orderList, String orderId, Map<String, dynamic> orderData) {
-    final index = orderList.indexWhere((order) => order.id == orderId);
-    if (index != -1) {
-      orderList[index] = Order.fromJson(orderData);
+    try {
+      final index = orderList.indexWhere((order) => order.id == orderId);
+      if (index != -1) {
+        orderList[index] = Order.fromJson(orderData);
+        print('🔄 Updated order $orderId in list at index $index');
+      } else {
+        print('⚠️ Order $orderId not found in list for update');
+      }
+    } catch (e) {
+      print('❌ ERROR in _updateOrderInList: $e');
     }
   }
 
   void clearError() {
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    print('🧹 OrderProvider error cleared');
+    notifyListeners();
   }
 
-  // Get orders by status
   List<Order> getOrdersByStatus(String status) {
-    return _orders.where((order) => order.status == status).toList();
+    try {
+      return _orders.where((order) => order.status == status).toList();
+    } catch (e) {
+      print('❌ ERROR in getOrdersByStatus: $e');
+      return [];
+    }
   }
 
   List<Order> getVendorOrdersByStatus(String status) {
-    return _vendorOrders.where((order) => order.status == status).toList();
+    try {
+      return _vendorOrders.where((order) => order.status == status).toList();
+    } catch (e) {
+      print('❌ ERROR in getVendorOrdersByStatus: $e');
+      return [];
+    }
   }
 
   List<Order> getDriverOrdersByStatus(String status) {
-    return _driverOrders.where((order) => order.status == status).toList();
+    try {
+      return _driverOrders.where((order) => order.status == status).toList();
+    } catch (e) {
+      print('❌ ERROR in getDriverOrdersByStatus: $e');
+      return [];
+    }
   }
 
-  // Get total earnings for driver
-  double get driverEarnings {
-    return _driverOrders
-        .where((order) => order.isCompleted)
-        .fold(0.0, (sum, order) => sum + order.deliveryFee);
-  }
-
-  // NEW: Get orders that need driver attention
   List<Order> get availableDriverOrders {
-    return _driverOrders.where((order) => 
-      order.isReady || order.isConfirmed
-    ).toList();
+    try {
+      return _driverOrders.where((order) => 
+        (order.status == 'confirmed' || order.status == 'preparing' || order.status == 'ready') &&
+        (order.taxiDriverId == null || order.taxiDriverId!.isEmpty) &&
+        (order.payment.status == 'completed' || order.payment.status == 'processing')
+      ).toList();
+    } catch (e) {
+      print('❌ ERROR in availableDriverOrders: $e');
+      return [];
+    }
   }
 
-  // NEW: Get active driver deliveries
   List<Order> get activeDriverDeliveries {
-    return _driverOrders.where((order) => 
-      order.isDelivering
-    ).toList();
+    try {
+      return _acceptedOrders.where((order) => order.status == 'delivering').toList();
+    } catch (e) {
+      print('❌ ERROR in activeDriverDeliveries: $e');
+      return [];
+    }
   }
 
-  // NEW: Get completed driver deliveries for earnings calculation
   List<Order> get completedDriverDeliveries {
-    return _driverOrders.where((order) => order.isCompleted).toList();
+    try {
+      return _acceptedOrders.where((order) => order.status == 'completed').toList();
+    } catch (e) {
+      print('❌ ERROR in completedDriverDeliveries: $e');
+      return [];
+    }
   }
-} 
+
+  // NEW: Clear all data
+  void clearData() {
+    _orders.clear();
+    _vendorOrders.clear();
+    _driverOrders.clear();
+    _acceptedOrders.clear();
+    _error = null;
+    _isLoading = false;
+    _driverEarnings = 0.0;
+    _completedOrdersCount = 0;
+    print('🧹 OrderProvider data cleared');
+    notifyListeners();
+  }
+
+  // NEW: Get order by ID
+  Future<Order?> getOrderById(String orderId) async {
+    print('🔍 OrderProvider.getOrderById called for order: $orderId');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.get('orders/$orderId');
+
+      _isLoading = false;
+
+      if (response['status'] == 'success') {
+        final orderData = response['data']?['order'] ?? response;
+        final order = Order.fromJson(orderData);
+        print('✅ Loaded order: ${order.id}');
+        print('📍 Delivery to: ${order.destination.address}');
+        return order;
+      } else {
+        _error = response['message'] ?? 'Failed to load order';
+        print('❌ Failed to load order: $_error');
+        return null;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Error loading order: $e';
+      print('❌ ERROR in OrderProvider.getOrderById: $e');
+      return null;
+    }
+  }
+
+  // NEW: Retry mechanism for failed requests
+  Future<T> _retryRequest<T>(Future<T> Function() requestFn, {int maxRetries = 3}) async {
+    for (int i = 0; i < maxRetries; i++) {
+      try {
+        return await requestFn();
+      } catch (e) {
+        print('❌ Request attempt ${i + 1} failed: $e');
+        if (i == maxRetries - 1) {
+          rethrow;
+        }
+        // Wait before retrying (exponential backoff)
+        await Future.delayed(Duration(seconds: (i + 1) * 2));
+      }
+    }
+    throw Exception('All retry attempts failed');
+  }
+
+  // NEW: Enhanced create order with retry
+  Future<bool> createOrderWithRetry({
+    required String vendorId,
+    required List<Map<String, dynamic>> items,
+    required double destinationLatitude,
+    required double destinationLongitude,
+    required String paymentMethod,
+    String? pickupAddress,
+    String? destinationAddress,
+    String? destinationInstructions,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    String? phoneNumber,
+    bool isUrgent = false,
+    String? notes,
+    required String vendorName,
+    required String vendorPhone,
+    required String passengerName,
+    required String passengerPhone,
+  }) async {
+    return await _retryRequest(() => createOrder(
+      vendorId: vendorId,
+      items: items,
+      destinationLatitude: destinationLatitude,
+      destinationLongitude: destinationLongitude,
+      paymentMethod: paymentMethod,
+      pickupAddress: pickupAddress,
+      destinationAddress: destinationAddress,
+      destinationInstructions: destinationInstructions,
+      pickupLatitude: pickupLatitude,
+      pickupLongitude: pickupLongitude,
+      phoneNumber: phoneNumber,
+      isUrgent: isUrgent,
+      notes: notes,
+      vendorName: vendorName,
+      vendorPhone: vendorPhone,
+      passengerName: passengerName,
+      passengerPhone: passengerPhone,
+    ));
+  }
+}

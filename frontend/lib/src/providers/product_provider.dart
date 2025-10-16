@@ -30,14 +30,13 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Load all products for passengers - FIXED: Safe state updates
+  // Load all products for passengers
   Future<void> loadProducts() async {
     if (_isLoading) return;
     
     _isLoading = true;
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
 
     try {
       final response = await _apiService.get('products');
@@ -56,19 +55,17 @@ class ProductProvider with ChangeNotifier {
       print('❌ Load products exception: $e');
     } finally {
       _isLoading = false;
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      notifyListeners();
     }
   }
 
-  // Load vendor-specific products - FIXED: Safe state updates
+  // Load vendor-specific products
   Future<void> loadVendorProducts() async {
     if (_isLoading) return;
     
     _isLoading = true;
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
 
     try {
       final response = await _apiService.get('products/vendor/my-products');
@@ -88,12 +85,11 @@ class ProductProvider with ChangeNotifier {
       print('❌ Load vendor products exception: $e');
     } finally {
       _isLoading = false;
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      notifyListeners();
     }
   }
 
-  // Create product for vendors - FIXED: Safe state updates
+  // Create product for vendors
   Future<bool> createProduct({
     required String name,
     required String description,
@@ -103,8 +99,7 @@ class ProductProvider with ChangeNotifier {
   }) async {
     _isLoading = true;
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
 
     try {
       final data = {
@@ -141,8 +136,7 @@ class ProductProvider with ChangeNotifier {
           
           _isLoading = false;
           _error = null;
-          // Safe notifyListeners
-          WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+          notifyListeners();
           
           print('🎉 PRODUCT CREATION SUCCESSFUL!');
           print('📦 Product ID: ${newProduct.id}');
@@ -155,36 +149,32 @@ class ProductProvider with ChangeNotifier {
           print('⚠️ Product created but parsing had minor issues: $parseError');
           _isLoading = false;
           _error = null;
-          // Safe notifyListeners
-          WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+          notifyListeners();
           return true;
         }
       } else {
         _isLoading = false;
         _error = response['message'] ?? 'Unknown error occurred';
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        notifyListeners();
         print('❌ Product creation failed: $_error');
         return false;
       }
     } catch (e) {
       _isLoading = false;
       _error = 'Network error: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      notifyListeners();
       print('❌ Product creation network error: $e');
       return false;
     }
   }
 
-  // Load single product - FIXED: Safe state updates
+  // Load single product
   Future<void> loadProduct(String id) async {
     if (_isLoading) return;
     
     _isLoading = true;
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
 
     try {
       final data = await _apiService.getProduct(id);
@@ -195,19 +185,17 @@ class ProductProvider with ChangeNotifier {
       print('❌ Load product error: $e');
     } finally {
       _isLoading = false;
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      notifyListeners();
     }
   }
 
-  // Update product - FIXED: Safe state updates
+  // Update product
   Future<bool> updateProduct(String id, Map<String, dynamic> productData) async {
     if (_isLoading) return false;
     
     _isLoading = true;
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
 
     try {
       final response = await _apiService.patch('products/$id', productData);
@@ -221,77 +209,62 @@ class ProductProvider with ChangeNotifier {
         
         _isLoading = false;
         _error = null;
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        notifyListeners();
         print('✅ Product updated successfully: $id');
         return true;
       } else {
         _isLoading = false;
         _error = response['message'] ?? 'Failed to update product';
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        notifyListeners();
         print('❌ Product update failed: $_error');
         return false;
       }
     } catch (e) {
       _isLoading = false;
       _error = 'Error updating product: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      notifyListeners();
       print('❌ Product update error: $e');
       return false;
     }
   }
 
-  // Delete product - FIXED: Safe state updates and 204 handling
+  // Delete product - FIXED: Proper 204 No Content handling
   Future<bool> deleteProduct(String id) async {
     if (_isLoading) return false;
     
     _isLoading = true;
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
 
     try {
-      final response = await _apiService.delete('products/$id');
+      // Use the dedicated delete method from ApiService
+      await _apiService.deleteProduct(id);
       
-      // Handle 204 No Content as success
-      if (response == null || (response is Map && response['success'] == true)) {
-        // Remove from all lists
-        _products.removeWhere((p) => p.id == id);
-        _filteredProducts.removeWhere((p) => p.id == id);
-        _vendorProducts.removeWhere((p) => p.id == id);
-        
-        // Clear selected product if it's the one being deleted
-        if (_selectedProduct?.id == id) {
-          _selectedProduct = null;
-        }
-        
-        _isLoading = false;
-        _error = null;
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-        print('✅ Product deleted successfully: $id');
-        return true;
-      } else {
-        _isLoading = false;
-        _error = 'Failed to delete product';
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-        print('❌ Product delete failed');
-        return false;
+      // Remove from all lists
+      _products.removeWhere((p) => p.id == id);
+      _filteredProducts.removeWhere((p) => p.id == id);
+      _vendorProducts.removeWhere((p) => p.id == id);
+      
+      // Clear selected product if it's the one being deleted
+      if (_selectedProduct?.id == id) {
+        _selectedProduct = null;
       }
+      
+      _isLoading = false;
+      _error = null;
+      notifyListeners();
+      print('✅ Product deleted successfully: $id');
+      return true;
     } catch (e) {
       _isLoading = false;
       _error = 'Error deleting product: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      notifyListeners();
       print('❌ Product delete error: $e');
       return false;
     }
   }
 
-  // Toggle favorite - FIXED: Safe state updates
+  // Toggle favorite
   Future<void> toggleFavorite(String productId) async {
     try {
       final response = await _apiService.post('products/$productId/favorite', {});
@@ -311,14 +284,12 @@ class ProductProvider with ChangeNotifier {
           _filteredProducts[filteredIndex] = _filteredProducts[filteredIndex].copyWith(isFavorite: isFavorite);
         }
         
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        notifyListeners();
         print('✅ Favorite toggled for product: $productId');
       }
     } catch (e) {
       _error = 'Error toggling favorite: $e';
-      // Safe notifyListeners
-      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+      notifyListeners();
       print('❌ Toggle favorite error: $e');
     }
   }
@@ -343,8 +314,7 @@ class ProductProvider with ChangeNotifier {
         _filteredProducts.sort((a, b) => b.id.compareTo(a.id));
         break;
     }
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
   }
 
   void filterProducts({String? category, String? searchQuery}) {
@@ -357,8 +327,7 @@ class ProductProvider with ChangeNotifier {
       return matchesCategory && matchesSearch && product.available;
     }).toList();
 
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
   }
 
   bool _matchesSearchQuery(Product product, String query) {
@@ -373,20 +342,17 @@ class ProductProvider with ChangeNotifier {
     _searchQuery = '';
     _selectedCategory = 'all';
     _filteredProducts = _products.where((product) => product.available).toList();
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
   }
 
   void clearError() {
     _error = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
   }
 
   void clearSelectedProduct() {
     _selectedProduct = null;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
   }
 
   // Helper method to update product in all lists
@@ -422,7 +388,7 @@ class ProductProvider with ChangeNotifier {
     return _vendorProducts.where((product) => product.stockQuantity < 5).toList();
   }
 
-  // Update product stock - FIXED: Safe state updates
+  // Update product stock
   Future<bool> updateProductStock(String productId, int newStock) async {
     try {
       final response = await _apiService.patch('products/$productId', {
@@ -434,8 +400,7 @@ class ProductProvider with ChangeNotifier {
         final updatedProduct = Product.fromJson(updatedProductData);
         
         _updateProductInLists(updatedProduct);
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        notifyListeners();
         print('✅ Stock updated for product: $productId');
         return true;
       }
@@ -457,7 +422,7 @@ class ProductProvider with ChangeNotifier {
     return _products.where((product) => product.vendorId == vendorId && product.available).toList();
   }
 
-  // Toggle product availability - FIXED: Safe state updates
+  // Toggle product availability
   Future<bool> toggleProductAvailability(String productId, bool available) async {
     try {
       final response = await _apiService.patch('products/$productId', {
@@ -469,8 +434,7 @@ class ProductProvider with ChangeNotifier {
         final updatedProduct = Product.fromJson(updatedProductData);
         
         _updateProductInLists(updatedProduct);
-        // Safe notifyListeners
-        WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+        notifyListeners();
         print('✅ Availability updated for product: $productId');
         return true;
       }
@@ -519,7 +483,6 @@ class ProductProvider with ChangeNotifier {
     _selectedCategory = 'all';
     _error = null;
     _isLoading = false;
-    // Safe notifyListeners
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListeners();
   }
 }

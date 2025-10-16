@@ -7,6 +7,7 @@ class OrderService {
 
   // Create order with payment method
   Future<Map<String, dynamic>> createOrder({
+    required String vendorId, // ADDED: Required vendorId parameter
     required List<Map<String, dynamic>> items,
     required double totalAmount,
     required String destinationAddress,
@@ -18,6 +19,7 @@ class OrderService {
   }) async {
     try {
       return await _apiService.createOrderWithPayment(
+        vendorId: vendorId, // PASS vendorId to API service
         items: items,
         totalAmount: totalAmount,
         destinationAddress: destinationAddress,

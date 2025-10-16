@@ -71,6 +71,8 @@ app.use('/api/v1/products', require('./src/routes/products'));
 app.use('/api/v1/orders', require('./src/routes/orders'));
 app.use('/api/v1/chats', require('./src/routes/chats'));
 app.use('/api/v1/interviews', require('./src/routes/interviews'));
+// FIXED: Add payment routes - THIS WAS MISSING!
+app.use('/api/v1/payments', require('./src/routes/payments'));
 
 // Health check
 app.get('/api/v1/health', (req, res) => {
@@ -119,6 +121,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`📍 Access via: http://localhost:${PORT}`);
   console.log(`📍 Or via your local IP: http://10.228.140.50:${PORT}`);
   console.log(`🌐 CORS enabled for ALL localhost ports (including random Flutter web ports)`);
+  console.log(`💳 Payment routes mounted at: http://localhost:${PORT}/api/v1/payments`);
 });
 
 // Socket.io setup - updated for web

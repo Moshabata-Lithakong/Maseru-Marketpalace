@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:maseru_marketplace/src/localization/app_localizations.dart';
 import 'package:maseru_marketplace/src/providers/auth_provider.dart';
-import 'package:maseru_marketplace/src/providers/cart_provider.dart'; // ADD THIS IMPORT
+import 'package:maseru_marketplace/src/providers/cart_provider.dart';
 import 'package:maseru_marketplace/src/providers/language_provider.dart';
 import 'package:maseru_marketplace/src/providers/product_provider.dart';
 import 'package:maseru_marketplace/src/providers/order_provider.dart';
+import 'package:maseru_marketplace/src/providers/payment_provider.dart'; // ADD PAYMENT PROVIDER
 import 'package:maseru_marketplace/src/providers/theme_provider.dart';
+import 'package:maseru_marketplace/src/providers/location_provider.dart'; // ADD THIS IMPORT
 import 'package:maseru_marketplace/src/services/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -65,19 +67,24 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ProductProvider(apiService)),
         ChangeNotifierProvider(create: (_) => LanguageProvider(prefs)),
         ChangeNotifierProvider(create: (_) => OrderProvider(apiService)),
-        ChangeNotifierProvider(create: (_) => CartProvider()), // ADD CART PROVIDER
+        ChangeNotifierProvider(create: (_) => PaymentProvider(apiService)), // ADD PAYMENT PROVIDER
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (context) => LocationProvider()),
       ],
+
       child: const MyApp(),
     ),
   );
 }
+
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // ADD THEME PROVIDER
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Consumer<LanguageProvider>(
       builder: (context, languageProvider, child) {
@@ -104,7 +111,7 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             brightness: Brightness.dark,
           ),
-          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light, // ADD THEME MODE
+          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           home: HomeScreen(),
           routes: {         
             '/passenger': (context) => PassengerScreen(),

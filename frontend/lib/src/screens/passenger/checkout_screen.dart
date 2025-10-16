@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:maseru_marketplace/src/providers/cart_provider.dart';
-import 'package:maseru_marketplace/src/services/order_service.dart';
+import 'package:maseru_marketplace/src/providers/order_provider.dart';
+import 'package:maseru_marketplace/src/providers/user_provider.dart';
 import 'package:maseru_marketplace/src/services/api_service.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+  final String vendorId;
+  final String vendorName;
+  final String vendorPhone;
+  final double pickupLatitude;
+  final double pickupLongitude;
+  final String pickupAddress;
+
+  const CheckoutScreen({
+    super.key,
+    required this.vendorId,
+    required this.vendorName,
+    required this.vendorPhone,
+    required this.pickupLatitude,
+    required this.pickupLongitude,
+    required this.pickupAddress,
+  });
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -22,7 +38,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
-    final orderService = OrderService(ApiService('http://localhost:5000/api/v1'));
+    final userProvider = Provider.of<UserProvider>(context);
+    final orderProvider = Provider.of<OrderProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -30,7 +47,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       body: _isProcessing
           ? _buildProcessingState()
-          : _buildCheckoutForm(cartProvider, orderService),
+          : _buildCheckoutForm(cartProvider, orderProvider, userProvider),
     );
   }
 
@@ -49,7 +66,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildCheckoutForm(CartProvider cartProvider, OrderService orderService) {
+  Widget _buildCheckoutForm(
+    CartProvider cartProvider, 
+    OrderProvider orderProvider, 
+    UserProvider userProvider,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -77,7 +98,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 32),
           
           // Place Order Button
-          _buildPlaceOrderButton(cartProvider, orderService),
+          _buildPlaceOrderButton(cartProvider, orderProvider, userProvider),
         ],
       ),
     );
@@ -236,11 +257,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildPlaceOrderButton(CartProvider cartProvider, OrderService orderService) {
+  Widget _buildPlaceOrderButton(
+    CartProvider cartProvider, 
+    OrderProvider orderProvider, 
+    UserProvider userProvider,
+  ) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isProcessing ? null : () => _placeOrder(cartProvider, orderService),
+        onPressed: _isProcessing ? null : () => _placeOrder(cartProvider, orderProvider, userProvider),
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           backgroundColor: Colors.green,
@@ -270,7 +295,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Future<void> _placeOrder(CartProvider cartProvider, OrderService orderService) async {
+  Future<void> _placeOrder(
+    CartProvider cartProvider, 
+    OrderProvider orderProvider, 
+    UserProvider userProvider,
+  ) async {
     // Validate required fields
     if (_addressController.text.isEmpty) {
       _showError('Please enter delivery address');
@@ -299,34 +328,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'price': item.product.price,
       }).toList();
 
-      // Create order
-      final orderResponse = await orderService.createOrder(
+      // Get user information
+      final userProfile = userProvider.user?.profile;
+      final passengerName = '${userProfile?.firstName ?? ''} ${userProfile?.lastName ?? ''}'.trim();
+      final passengerPhone = userProfile?.phone ?? '';
+
+      // Create order using OrderProvider
+      final success = await orderProvider.createOrder(
+        vendorId: widget.vendorId,
         items: items,
-        totalAmount: cartProvider.totalAmount,
-        destinationAddress: _addressController.text,
+        destinationLatitude: -29.3309123, // Example coordinates - replace with actual
+        destinationLongitude: 27.5233637, // Example coordinates - replace with actual
         paymentMethod: _selectedPaymentMethod,
+        pickupAddress: widget.pickupAddress,
+        destinationAddress: _addressController.text,
         destinationInstructions: _instructionsController.text.isEmpty 
             ? null 
             : _instructionsController.text,
+        pickupLatitude: widget.pickupLatitude,
+        pickupLongitude: widget.pickupLongitude,
         phoneNumber: _selectedPaymentMethod == 'cash' 
             ? null 
             : _phoneController.text,
+        vendorName: widget.vendorName,
+        vendorPhone: widget.vendorPhone,
+        passengerName: passengerName,
+        passengerPhone: passengerPhone,
+        notes: _instructionsController.text.isEmpty ? null : _instructionsController.text,
       );
 
-      if (orderResponse['status'] == 'success') {
-        final orderId = orderResponse['data']?['order']?['_id'] ?? orderResponse['_id'];
-        
-        // If M-Pesa or EcoCash, initiate payment
-        if (_selectedPaymentMethod == 'mpesa' || _selectedPaymentMethod == 'ecocash') {
-          await _processMobilePayment(orderService, orderId, cartProvider.totalAmount);
-        } else {
-          // For cash, just show success
-          _showSuccess('Order placed successfully!');
-          cartProvider.clearCart();
-          Navigator.pop(context); // Go back to previous screen
-        }
+      if (success) {
+        _showSuccess('Order placed successfully!');
+        cartProvider.clearCart();
+        Navigator.pop(context); // Go back to previous screen
       } else {
-        _showError('Failed to create order: ${orderResponse['message']}');
+        _showError('Failed to create order: ${orderProvider.error}');
       }
     } catch (e) {
       _showError('Error placing order: $e');
@@ -334,42 +370,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() {
         _isProcessing = false;
       });
-    }
-  }
-
-  Future<void> _processMobilePayment(
-    OrderService orderService, 
-    String orderId, 
-    double amount,
-  ) async {
-    try {
-      Map<String, dynamic> paymentResponse;
-      
-      if (_selectedPaymentMethod == 'mpesa') {
-        paymentResponse = await orderService.initiateMpesaPayment(
-          orderId: orderId,
-          phoneNumber: _phoneController.text,
-          amount: amount,
-        );
-      } else {
-        paymentResponse = await orderService.initiateEcocashPayment(
-          orderId: orderId,
-          phoneNumber: _phoneController.text,
-          amount: amount,
-        );
-      }
-
-      if (paymentResponse['status'] == 'success') {
-        _showSuccess(
-          'Payment initiated! Please check your phone to complete the ${_selectedPaymentMethod == 'mpesa' ? 'M-Pesa' : 'EcoCash'} payment.',
-        );
-        cartProvider.clearCart();
-        Navigator.pop(context);
-      } else {
-        _showError('Payment initiation failed: ${paymentResponse['message']}');
-      }
-    } catch (e) {
-      _showError('Payment error: $e');
     }
   }
 

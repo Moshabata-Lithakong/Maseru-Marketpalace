@@ -88,7 +88,6 @@ class _ProductManagementState extends State<ProductManagement> {
 
     final productProvider = Provider.of<ProductProvider>(context, listen: false);
     final appLocalizations = AppLocalizations.of(context);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     try {
       final success = await productProvider.createProduct(
@@ -116,7 +115,7 @@ class _ProductManagementState extends State<ProductManagement> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${productProvider.error}'),
+            content: Text('Error: ${productProvider.error ?? "Unknown error"}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -142,7 +141,6 @@ class _ProductManagementState extends State<ProductManagement> {
     if (widget.product == null) return;
     
     final productProvider = Provider.of<ProductProvider>(context, listen: false);
-    final appLocalizations = AppLocalizations.of(context);
     
     if (await _showDeleteConfirmation(widget.product!)) {
       try {
@@ -150,8 +148,8 @@ class _ProductManagementState extends State<ProductManagement> {
         if (!mounted) return;
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Product deleted successfully!'),
+          const SnackBar(
+            content: Text('Product deleted successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -229,10 +227,6 @@ class _ProductManagementState extends State<ProductManagement> {
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[50],
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: Text(
           widget.product == null
               ? 'Add Product'
@@ -385,5 +379,5 @@ class _ProductManagementState extends State<ProductManagement> {
         ),
       ),
     );
-  }
+  }  
 }
