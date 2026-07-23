@@ -21,9 +21,13 @@ Drivers Accept delivery requests, view pickup/drop-off locations, and update del
 🛠️ Tech Stack
 
 · Frontend: Flutter / Dart
+
 · Backend: Node.js / JavaScript
+
 · Database: MongoDB 
+
 · Deployment: Vercel
+
 · AI/ML: TensorFlow / Custom ML models
 
 ✨ Key Features
