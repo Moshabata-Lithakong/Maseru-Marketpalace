@@ -1,28 +1,49 @@
-# Maseru Marketplace
+🛒 Maseru Marketplace
 
-A centralized digital hub connecting local vendors and customers in Lesotho to boost the local economy.
+A comprehensive digital ecosystem connecting customers, vendors, and drivers in Lesotho to streamline local commerce and delivery.
 
-## 🚀 Live Demo
-[maseru-marketplace.vercel.app](https://maseru-marketplace.vercel.app/)
+🚀 Live Demo
 
-## 📱 Tech Stack
-- Frontend: Flutter / Dart
-- Backend: Node.js / JavaScript
-- Deployment: Vercel
+maseru-marketplace.vercel.app
 
-## 🎯 Key Features
-- Vendor and customer authentication
-- Product listing and browsing
-- Secure payment integration (coming soon)
-- Responsive design for mobile and desktop
+👥 User Roles
 
-## 🔧 Setup Instructions
+Role Description
+Customers Browse products, place orders, track deliveries, and make payments
+Vendors List products, manage inventory, receive orders, and handle customer requests
+Drivers Accept delivery requests, view pickup/drop-off locations, and update delivery status
+
+🧠 AI Integration
+
+· Smart Route Optimization: AI-powered delivery routing for drivers to minimize travel time
+· Personalized Recommendations: Product suggestions for customers based on browsing history
+· Demand Forecasting: Predictive analytics to help vendors manage stock levels
+
+🛠️ Tech Stack
+
+· Frontend: Flutter / Dart
+· Backend: Node.js / JavaScript
+· Database: MongoDB 
+· Deployment: Vercel
+· AI/ML: TensorFlow / Custom ML models
+
+✨ Key Features
+
+· Secure multi-role authentication
+· Real-time order tracking
+· In-app messaging between users
+· Payment gateway integration
+· Driver geolocation and tracking
+
+📦 Setup Instructions
+
 ```bash
-# Clone the repository
 git clone https://github.com/Moshabata-Lithakong/Maseru-Marketpalace
-
-# Install dependencies
+cd Maseru-Marketpalace
 npm install
-
-# Run development server
 npm run dev
+```
+
+📈 The Startup
+
+This project was developed for Maseru Marketplace (the startup), an initiative aimed at digitizing Lesotho's local economy by connecting small businesses, customers, and delivery partners on a single platform. It's part of a broader effort to promote e-commerce adoption in Lesotho and create sustainable income opportunities for local entrepreneurs.
