@@ -2,9 +2,8 @@
 
 A comprehensive digital ecosystem connecting customers, vendors, and drivers in Lesotho to streamline local commerce and delivery.
 
-🚀 Live Demo
-
-maseru-marketplace.vercel.app
+🚀 Live Demo 
+https://maseru-marketplace.vercel.app/
 
 👥 User Roles
 
